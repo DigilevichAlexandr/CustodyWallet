@@ -1,15 +1,14 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 80
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-COPY ["CustodyWallet.csproj", "."]
-RUN dotnet restore "./CustodyWallet.csproj"
-COPY . .
-RUN dotnet publish "./CustodyWallet.csproj" -c Release -o /app/publish
-
-FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+
+COPY *.csproj ./
+RUN dotnet restore
+
+COPY . ./
+RUN dotnet build --no-restore -c Release
+RUN dotnet publish --no-build -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish ./
 ENTRYPOINT ["dotnet", "CustodyWallet.dll"]
